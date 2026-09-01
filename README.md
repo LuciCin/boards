@@ -10,17 +10,18 @@ This is the companion site to a physical build: a battery-powered e-ink display 
 
 ```
 ESPN public API  →  Raspberry Pi (Python/Pillow renderer, every 2h)
-                          →  git push (scoped deploy key)  →  GitHub Pages (this repo)
+                          →  git push to `live` (scoped deploy key)  →  GitHub Pages
 ```
 
 - A Raspberry Pi fetches live standings, schedules and results, renders every board as a PNG/GIF (grayscale for the e-ink device, color for this site), and pushes the color set here.
 - The site itself is one static `index.html` — a hash-routed landing page of club cards, each opening that club's boards: standings, next match, recent results, and an animated season sparkline that morphs into the table.
 - Adding a club is a ~6-line "team pack" in the renderer (league + team ids, labels, tiebreaker); every view, the combined upcoming list, and this site's registry pick it up from there.
 
-## Repo shape (deliberately odd)
+## Repo shape
 
-- **`main` holds exactly one commit.** Each publish amends and force-pushes it, so the repo never accumulates gigabytes of image history. Don't PR against `main` — the next render will overwrite it.
-- **`archive` holds the history that matters.** A weekly GitHub Action snapshots the boards into `snapshots/<date>/` there, so season results survive the overwrite.
+- **`main` — the source branch.** The site page, this README, and the workflows. Normal git: branch, PR, merge; the publisher picks up merged site changes on its next cycle.
+- **`live` — what Pages serves.** `main`'s site files plus the latest renders, rebuilt as a single force-pushed commit each publish so image history never bloats the repo. Generated — don't edit it.
+- **`archive` — the history that matters.** A weekly GitHub Action snapshots the boards into `snapshots/<date>/`, so season results survive the publish overwrite.
 
 ## Notes
 

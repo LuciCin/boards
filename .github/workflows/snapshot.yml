@@ -22,6 +22,7 @@ jobs:
         run: |
           set -euo pipefail
           d=$(date -u +%F)
+          git switch live # the served branch is where the rendered boards live
           mkdir -p /tmp/snap
           cp *.png /tmp/snap/
           git config user.name "boards-snapshot"
