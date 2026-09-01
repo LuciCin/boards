@@ -35,5 +35,9 @@ jobs:
           mkdir -p "snapshots/$d"
           cp /tmp/snap/* "snapshots/$d/"
           git add snapshots
-          git commit -m "snapshot $d"
-          git push origin archive
+          if git diff --cached --quiet; then
+            echo "boards unchanged since the last snapshot — nothing to commit"
+          else
+            git commit -m "snapshot $d"
+            git push origin archive
+          fi
