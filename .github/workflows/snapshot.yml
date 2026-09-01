@@ -1,0 +1,38 @@
+name: snapshot
+# Weekly snapshot of the live boards into the `archive` branch, so season
+# history survives main's amend+force-push publish model. PNGs only (the gifs
+# are heavy and re-derivable); run manually via workflow_dispatch at season end.
+
+on:
+  schedule:
+    - cron: "23 7 * * 1" # Mondays 07:23 UTC — after the weekend's matches
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: snapshot boards into the archive branch
+        run: |
+          set -euo pipefail
+          d=$(date -u +%F)
+          mkdir -p /tmp/snap
+          cp *.png /tmp/snap/
+          git config user.name "boards-snapshot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin archive >/dev/null; then
+            git switch archive
+          else
+            git switch --orphan archive
+          fi
+          mkdir -p "snapshots/$d"
+          cp /tmp/snap/* "snapshots/$d/"
+          git add snapshots
+          git commit -m "snapshot $d"
+          git push origin archive
