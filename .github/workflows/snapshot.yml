@@ -1,11 +1,15 @@
 name: snapshot
-# Weekly snapshot of the live boards into the `archive` branch, so season
-# history survives main's amend+force-push publish model. PNGs only (the gifs
-# are heavy and re-derivable); run manually via workflow_dispatch at season end.
+# Daily snapshot of the live boards into the `archive` branch, so season
+# history survives the publish model's overwrite. Dedupe is data-driven: the
+# publisher ships state.txt (a hash of the league-wide results data) alongside
+# the boards, and days where no games were played are skipped — the images
+# themselves can't be byte-compared because every render bakes in an "updated"
+# timestamp. PNGs only (the gifs are heavy and re-derivable); run manually via
+# workflow_dispatch to capture a season's exact final day.
 
 on:
   schedule:
-    - cron: "23 7 * * 1" # Mondays 07:23 UTC — after the weekend's matches
+    - cron: "23 7 * * *" # daily 07:23 UTC — after any evening matches, before US morning
   workflow_dispatch:
 
 permissions:
@@ -25,12 +29,19 @@ jobs:
           git switch live # the served branch is where the rendered boards live
           mkdir -p /tmp/snap
           cp *.png /tmp/snap/
+          [ -f state.txt ] && cp state.txt /tmp/snap/
           git config user.name "boards-snapshot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin archive >/dev/null; then
             git switch archive
           else
             git switch --orphan archive
+          fi
+          last=$(ls -d snapshots/*/ 2>/dev/null | sort | tail -1 || true)
+          if [ -n "$last" ] && [ -f "$last/state.txt" ] && [ -f /tmp/snap/state.txt ] \
+             && cmp -s "$last/state.txt" /tmp/snap/state.txt; then
+            echo "no games played since $last — skipping"
+            exit 0
           fi
           mkdir -p "snapshots/$d"
           cp /tmp/snap/* "snapshots/$d/"
