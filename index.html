@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boards</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0 auto; max-width: 960px; background: #14161c; color: #e8e6e0; font: 16px/1.4 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  html { background: #14161c; }
+  header { padding: 14px 16px 2px; display: flex; align-items: baseline; gap: 10px; }
+  h1 { margin: 0; font-size: 18px; letter-spacing: .04em; }
+  h1 a { color: inherit; text-decoration: none; }
+  #stamp { color: #8b8f99; font-size: 12px; }
+  h2 { font-size: 12px; letter-spacing: .12em; color: #8b8f99; text-transform: uppercase; margin: 16px 16px 6px; }
+  .imgs { display: flex; flex-direction: column; gap: 8px; padding: 0 10px; }
+  .imgs a { display: block; }
+  .imgs img { width: 100%; height: auto; display: block; border-radius: 8px; background: #fff; }
+  /* landing: team cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 0 10px; }
+  .card { display: block; text-decoration: none; color: inherit; background: #1c1f27; border: 1px solid #262a34;
+          border-top: 3px solid var(--accent, #262a34); border-radius: 10px; padding: 14px 12px 12px; text-align: center; }
+  .card .crest { width: 120px; height: 120px; margin: 0 auto 10px; border-radius: 10px; background: #fff;
+                 display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card .crest img { max-width: 100%; max-height: 100%; display: block; }
+  .card .name { font-size: 15px; font-weight: 700; }
+  .card .sub { font-size: 12px; color: #8b8f99; margin-top: 2px; }
+  /* team page hero */
+  .hero { display: flex; align-items: center; gap: 14px; padding: 10px 16px 2px; }
+  .hero .crest { width: 72px; height: 72px; border-radius: 10px; background: #fff; flex: none;
+                 display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .hero .crest img { max-width: 100%; max-height: 100%; display: block; }
+  .hero .name { font-size: 17px; font-weight: 700; }
+  .hero .sub { font-size: 12px; color: #8b8f99; margin-top: 2px; }
+  .back { display: inline-block; color: #8b8f99; font-size: 13px; text-decoration: none; margin: 10px 16px 0; }
+  footer { color: #565b66; font-size: 12px; padding: 18px 16px 28px; }
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="#">BOARDS</a></h1>
+  <div id="stamp"></div>
+</header>
+
+<div id="app"></div>
+
+<footer>Rendered on a Raspberry Pi from live data every 2 h, published here automatically. Tap any board to open it full-screen, then pinch to zoom. Rotate the phone for the wide boards.</footer>
+
+<script>
+  // Team registry. `crest` is the club's animated crest when we've built one
+  // (hand-vectorized + animated); ESPN's static art fills in until then.
+  var TEAMS = [
+    { key: "hearts",  name: "Hearts of Pine",  sub: "USL League One",  accent: "#0b2340",
+      crest: "crest_anim.gif",
+      board: "hearts_color.png", next: "nextmatch_color.png", results: "results_color.png", spark: "sparkline_color_alt.gif" },
+    { key: "arsenal", name: "Arsenal",         sub: "Premier League",  accent: "#EF0107",
+      crest: "https://a.espncdn.com/i/teamlogos/soccer/500/359.png",
+      board: "arsenal_color.png", next: "arsenal_nextmatch_color.png", results: "arsenal_results_color.png", spark: "arsenal_sparkline_color_alt.gif" },
+    { key: "mancity", name: "Manchester City", sub: "Premier League",  accent: "#6CABDD",
+      crest: "https://a.espncdn.com/i/teamlogos/soccer/500/382.png",
+      board: "mancity_color.png", next: "mancity_nextmatch_color.png", results: "mancity_results_color.png", spark: "mancity_sparkline_color_alt.gif" }
+  ];
+
+  function crestBox(t, cls) {
+    return '<div class="crest ' + (cls || "") + '"><img data-src="' + t.crest + '" alt="' + t.name + ' crest"></div>';
+  }
+
+  function landing() {
+    var h = '<h2>Upcoming — all clubs</h2><div class="imgs">' +
+            '<a href="upcoming_color.png"><img data-src="upcoming_color.png" alt="upcoming matches"></a></div>' +
+            '<h2>Clubs</h2><div class="cards">';
+    TEAMS.forEach(function (t) {
+      h += '<a class="card" href="#' + t.key + '" style="--accent:' + t.accent + '">' + crestBox(t) +
+           '<div class="name">' + t.name + '</div><div class="sub">' + t.sub + '</div></a>';
+    });
+    return h + '</div>';
+  }
+
+  function teamPage(t) {
+    var tiles = [
+      [t.board,   "standings board", ""],
+      [t.next,    "next match",      ' loading="lazy"'],
+      [t.results, "recent results",  ' loading="lazy"'],
+      [t.spark,   "sparkline into table (animated)", ' loading="lazy"']
+    ];
+    var h = '<a class="back" href="#">← all clubs</a>' +
+            '<div class="hero">' + crestBox(t) +
+            '<div><div class="name">' + t.name + '</div><div class="sub">' + t.sub + '</div></div></div>' +
+            '<div class="imgs">';
+    tiles.forEach(function (x) {
+      h += '<a href="' + x[0] + '"><img data-src="' + x[0] + '" alt="' + x[1] + '"' + x[2] + '></a>';
+    });
+    return h + '</div>';
+  }
+
+  function render() {
+    var key = location.hash.replace("#", "");
+    var t = TEAMS.filter(function (x) { return x.key === key; })[0];
+    document.getElementById("app").innerHTML = t ? teamPage(t) : landing();
+    window.scrollTo(0, 0);
+    bust();
+  }
+
+  // cache-bust every board image on load, on returning to the tab, and every 10 min
+  // (external crest art is left alone)
+  function bust() {
+    var t = Date.now();
+    document.querySelectorAll("img[data-src]").forEach(function (im) {
+      var s = im.dataset.src;
+      im.src = s.indexOf("http") === 0 ? s : s + "?t=" + t;
+    });
+    document.getElementById("stamp").textContent =
+      "loaded " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  window.addEventListener("hashchange", render);
+  render();
+  setInterval(bust, 600000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) bust(); });
+</script>
+</body>
+</html>
