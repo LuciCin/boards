@@ -23,6 +23,14 @@ ESPN public API  →  Raspberry Pi (Python/Pillow renderer, every 2h)
 - **`live` — what Pages serves.** `main`'s site files plus the latest renders, rebuilt as a single force-pushed commit each publish so image history never bloats the repo. Generated — don't edit it.
 - **`archive` — the history that matters.** A weekly GitHub Action snapshots the boards into `snapshots/<date>/`, so season results survive the publish overwrite.
 
+## Around the repo
+
+- **[Wiki](https://github.com/LuciCin/boards/wiki)** — the deep dive: the full pipeline, the branch model, adding a club, the e-ink device — plus the [origin story](https://github.com/LuciCin/boards/wiki/Kick-Off).
+- **[Discussions](https://github.com/LuciCin/boards/discussions)** — propose ideas and vote with upvotes; currently deciding [which club joins next](https://github.com/LuciCin/boards/discussions/3).
+- **[Roadmap](https://github.com/users/LuciCin/projects/1)** — the project board: what's planned, what's moving.
+- **[Issues](https://github.com/LuciCin/boards/issues)** — accepted work items (ideas graduate here from Discussions).
+- **[`archive` branch](https://github.com/LuciCin/boards/tree/archive)** — match-day snapshots of the boards, so season history outlives the publish overwrite.
+
 ## Notes
 
 - Unofficial, non-commercial fan project — not affiliated with the clubs, the leagues, or ESPN. Crest artwork belongs to the clubs.
