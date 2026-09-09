@@ -34,6 +34,11 @@
   .hero .sub { font-size: 12px; color: #8b8f99; margin-top: 2px; }
   .back { display: inline-block; color: #8b8f99; font-size: 13px; text-decoration: none; margin: 10px 16px 0; }
   footer { color: #565b66; font-size: 12px; padding: 18px 16px 28px; }
+  /* competition switcher for the results tile */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+  .chips button { background: #1c1f27; color: #8b8f99; border: 1px solid #262a34; border-radius: 999px;
+                  padding: 5px 12px; font: inherit; font-size: 13px; }
+  .chips button.on { color: #e8e6e0; border-color: #e8e6e0; }
 </style>
 </head>
 <body>
@@ -49,16 +54,19 @@
 <script>
   // Team registry. `crest` is the club's animated crest when we've built one
   // (hand-vectorized + animated); ESPN's static art fills in until then.
+  // `comps` are the results tiles by competition: <prefix>results_<key>_color.png ("all" = every comp, tagged).
+  var EPL = [["all", "All"], ["pl", "PL"], ["ucl", "UCL"], ["facup", "FA Cup"], ["carabao", "Carabao"], ["friendly", "Friendlies"]];
   var TEAMS = [
     { key: "hearts",  name: "Hearts of Pine",  sub: "USL League One",  accent: "#0b2340",
-      crest: "crest_anim.gif",
-      board: "hearts_color.png", next: "nextmatch_color.png", results: "results_color.png", spark: "sparkline_color_alt.gif" },
+      crest: "crest_anim.gif", prefix: "",
+      board: "hearts_color.png", next: "nextmatch_color.png", spark: "sparkline_color_alt.gif",
+      comps: [["all", "All"], ["usl1", "USL1"], ["uslcup", "USL Cup"], ["usopen", "Open Cup"]] },
     { key: "arsenal", name: "Arsenal",         sub: "Premier League",  accent: "#EF0107",
-      crest: "https://a.espncdn.com/i/teamlogos/soccer/500/359.png",
-      board: "arsenal_color.png", next: "arsenal_nextmatch_color.png", results: "arsenal_results_color.png", spark: "arsenal_sparkline_color_alt.gif" },
+      crest: "https://a.espncdn.com/i/teamlogos/soccer/500/359.png", prefix: "arsenal_",
+      board: "arsenal_color.png", next: "arsenal_nextmatch_color.png", spark: "arsenal_sparkline_color_alt.gif", comps: EPL },
     { key: "mancity", name: "Manchester City", sub: "Premier League",  accent: "#6CABDD",
-      crest: "https://a.espncdn.com/i/teamlogos/soccer/500/382.png",
-      board: "mancity_color.png", next: "mancity_nextmatch_color.png", results: "mancity_results_color.png", spark: "mancity_sparkline_color_alt.gif" }
+      crest: "https://a.espncdn.com/i/teamlogos/soccer/500/382.png", prefix: "mancity_",
+      board: "mancity_color.png", next: "mancity_nextmatch_color.png", spark: "mancity_sparkline_color_alt.gif", comps: EPL }
   ];
 
   function crestBox(t, cls) {
@@ -76,22 +84,37 @@
     return h + '</div>';
   }
 
-  function teamPage(t) {
-    var tiles = [
-      [t.board,   "standings board", ""],
-      [t.next,    "next match",      ' loading="lazy"'],
-      [t.results, "recent results",  ' loading="lazy"'],
-      [t.spark,   "sparkline into table (animated)", ' loading="lazy"']
-    ];
-    var h = '<a class="back" href="#">← all clubs</a>' +
-            '<div class="hero">' + crestBox(t) +
-            '<div><div class="name">' + t.name + '</div><div class="sub">' + t.sub + '</div></div></div>' +
-            '<div class="imgs">';
-    tiles.forEach(function (x) {
-      h += '<a href="' + x[0] + '"><img data-src="' + x[0] + '" alt="' + x[1] + '"' + x[2] + '></a>';
-    });
-    return h + '</div>';
+  function tile(src, alt, lazy) {
+    return '<a href="' + src + '"><img data-src="' + src + '" alt="' + alt + '"' + (lazy ? ' loading="lazy"' : '') + '></a>';
   }
+
+  function teamPage(t) {
+    var results = t.prefix + "results_all_color.png";
+    return '<a class="back" href="#">← all clubs</a>' +
+           '<div class="hero">' + crestBox(t) +
+           '<div><div class="name">' + t.name + '</div><div class="sub">' + t.sub + '</div></div></div>' +
+           '<div class="imgs">' +
+           tile(t.board, "standings board") +
+           tile(t.next, "next match", true) +
+           '<div class="chips">' + t.comps.map(function (c, i) {
+             return '<button data-comp="' + c[0] + '"' + (i ? '' : ' class="on"') + '>' + c[1] + '</button>';
+           }).join('') + '</div>' +
+           tile(results, "results by competition", true) +
+           tile(t.spark, "sparkline into table (animated)", true) +
+           '</div>';
+  }
+
+  // results by competition: a chip swaps the tile right after its row to <prefix>results_<comp>_color.png
+  document.getElementById("app").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".chips button");
+    if (!b) return;
+    var t = TEAMS.filter(function (x) { return x.key === location.hash.replace("#", ""); })[0];
+    var row = b.parentNode, a = row.nextElementSibling, im = a.querySelector("img");
+    row.querySelectorAll("button").forEach(function (x) { x.className = ""; });
+    b.className = "on";
+    var f = t.prefix + "results_" + b.dataset.comp + "_color.png";
+    a.href = f; im.dataset.src = f; im.src = f + "?t=" + Date.now();
+  });
 
   function render() {
     var key = location.hash.replace("#", "");
